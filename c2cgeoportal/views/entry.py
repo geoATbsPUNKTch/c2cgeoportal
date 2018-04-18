@@ -77,11 +77,13 @@ class DimensionInformation:
 
     def __init__(self):
         self._dimensions = {}
+        self._dimension_filters = {}
 
     def merge(self, layer, layer_node, mixed):
         errors = set()
 
         dimensions = {}
+        dimensions_filters = {}
         for dimension in layer.dimensions:
             if not isinstance(layer, LayerWMS) and dimension.value is not None and \
                     not self.URL_PART_RE.match(dimension.value):
@@ -93,8 +95,16 @@ class DimensionInformation:
                     layer.name, dimension.name
                 ))
             else:
-                dimensions[dimension.name] = dimension.value
+                if dimension.field:
+                    dimensions_filters[dimension.name] = {
+                        'field': dimension.field,
+                        'value': dimension.value
+                    }
+                else:
+                    dimensions[dimension.name] = dimension.value
 
+        if dimensions_filters:
+            layer_node["dimensions_filters"] = dimensions_filters
         if mixed:
             layer_node["dimensions"] = dimensions
         else:
@@ -269,16 +279,20 @@ class Entry:
             log.exception(error)
             return None, errors
 
+        # Fix for owslib / QGIS 3 compatibility
+        content = content.replace('<MetadataURL/>', '')
+
         try:
-            wms = WebMapService(None, xml=content)
-        except:  # pragma: no cover
+            wms = WebMapService(None, xml=content, version='1.3.0')
+        except Exception as e:  # pragma: no cover
             error = _(
                 "WARNING! an error occurred while trying to "
                 "read the mapfile and recover the themes."
             )
-            error = u"{0!s}\nURL: {1!s}\n{2!s}".format(error, url, content.encode("utf-8"))
+            error = u"{0!s}\nURL: {1!s}".format(error, url)
             errors.add(error)
             log.exception(error)
+            log.exception(e)
         return wms, errors
 
     def _create_layer_query(self, role_id, version, interface):
