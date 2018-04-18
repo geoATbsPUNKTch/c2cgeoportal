@@ -16,7 +16,7 @@ pyramid.available_languages = fr en
 app.cfg = %(here)s/config.yaml
 
 sqlalchemy.url = postgresql://${dbuser}:${dbpassword}@${dbhost}:${dbport}/${db}
-alembic_ini = %(here)s/../geoportal/tests/functional/alembic.ini
+alembic_ini = %(here)s/../commons/acceptance_tests/alembic.ini
 
 healthcheck_host = localhost
 
