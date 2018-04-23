@@ -48,4 +48,14 @@ ${service_defaults('mapserver', 80)}\
 
   geoportal:
     image: ${docker_base}-geoportal:${docker_tag}
-${service_defaults('geoportal', 80, True)}\
+${service_defaults('geoportal', 80)}\
+
+  proxy:
+    image: haproxy:1.8
+    volumes_from:
+      - config:ro
+    volumes:
+      - /dev/log:/dev/log:rw
+    command: ["haproxy", "-f", "/etc/haproxy"]
+${service_defaults('proxy', 80, True)}
+
